@@ -1,0 +1,67 @@
+#1.Pull the MySQL Docker Image
+
+sudo docker pull mysql/mysql-server:latest
+
+
+#2.Verify the image is now stored locally 
+sudo docker images
+
+output should include mysql/mysql-server
+
+#3.Deploy the MySQL Container
+sudo docker run --name=[container_name] -d [image_tag_name]
+
+#4.check to see if the MySQL container is running
+docker ps
+
+#5.Connect to the MySQL Docker Container
+#make sure the MySQL client package is installed
+apt-get install mysql-client
+
+#6.open the logs file for the MySQL container to find the generated root password
+
+sudo docker logs [container_name]
+
+#7.bash shell of the MySQL container
+sudo docker exec -it [container_name] bash
+
+sudo docker -it mysql_docker bash
+
+change the server root password to protect your information
+mysql> ALTER USER 'root'@'localhost' IDENTIFIED BY '[newpassword]';
+
+
+#Configure MySQL Container
+
+#1.create a new directory on the host machine:
+sudo mkdir -p /root/docker/[container_name]/conf.d
+
+#2.Create a custom MySQL config file inside that directory:
+sudo nano /root/docker/[container_name]/conf.d/my-custom.cnf
+
+#3.add lines with the desired configuration
+[mysqld]
+max_connections=250
+
+#4.run the container and map the volume path with the command:
+
+docker run \
+--detach \
+--name=[container_name] \
+--env="MYSQL_ROOT_PASSWORD=[my_password]" \
+--publish 6603:3306 \
+--volume=/root/docker/[container_name]/conf.d:/etc/mysql/conf.d \
+mysql
+
+#7.To check whether the container loaded the configuration from the host,
+mysql -uroot -pmypassword -h127.0.0.1 -P6603 -e 'show global variables like "max_connections"';
+
+
+Manage Data Storage
+
+#1.To check the location of the volumes
+sudo docker inspect [container_name]
+
+#2.find an appropriate volume on the host and create a data directory on it
+sudo mkdir -p /storage/docker/mysql-data
+
